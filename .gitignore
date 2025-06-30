@@ -1,0 +1,35 @@
+# Node modules (dependencies)
+node_modules/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Environment variables
+.env
+
+# OS-specific files
+.DS_Store  # macOS
+Thumbs.db  # Windows
+
+# Editor-specific files
+.vscode/
+.idea/
+
+# Build output
+dist/
+build/
+
+# Optional: coverage reports, test results, etc.
+coverage/
+*.lcov
+
+# Optional: if using TypeScript
+*.tsbuildinfo
+
+# Optional: if using PM2 or other process managers
+pids/
+*.pid
+*.seed
+*.pid.lock
