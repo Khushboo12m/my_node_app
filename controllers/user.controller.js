@@ -2,52 +2,62 @@ const { validationResult } = require('express-validator');
 const User = require('../models/user.model');
 const { UniqueConstraintError } = require('sequelize');
 
-
 // CREATE USER
-exports.createUser = async (req, res) => {
+exports.createUser = async (req, res, next) => {
   const errors = validationResult(req); 
   if (!errors.isEmpty()) {
-    return res.status(422).json({ errors: errors.array() });
+    return next({
+      type: 'validation',
+      errors: errors.array()
+    });
   }
 
   try {
     const user = await User.create(req.body);
     return res.status(201).json({ message: 'User created', data: user });
   } catch (error) {
-
-     // Handle Sequelize unique constraint error (email already exists)
     if (error instanceof UniqueConstraintError) {
-      return res.status(400).json({ error: 'Email already exists' });
+      error.statusCode = 400;
     }
-    return res.status(500).json({ error: error.message });
+    next(error);
   }
 };
 
 // GET ALL USERS
-exports.getAllUsers = async (req, res) => {
+exports.getAllUsers = async (req, res, next) => {
   try {
     const users = await User.findAll();
     return res.status(200).json({ data: users });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    next(error);
   }
 };
 
 //  GET USER BY ID
-exports.getUserById = async (req, res) => {
+exports.getUserById = async (req, res, next) => {
   try {
     const user = await User.findByPk(req.params.id);
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      const error = new Error('User not found');
+      error.statusCode = 404;
+      return next(error);
     }
     return res.status(200).json({ data: user });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    next(error);
   }
 };
 
 //  UPDATE USER
-exports.updateUser = async (req, res) => {
+exports.updateUser = async (req, res, next) => {
+  const errors = validationResult(req); 
+  if (!errors.isEmpty()) {
+    return next({
+      type: 'validation',
+      errors: errors.array()
+    });
+  }
+
   try {
     const [updated] = await User.update(req.body, {
       where: { id: req.params.id }
@@ -57,15 +67,17 @@ exports.updateUser = async (req, res) => {
       const updatedUser = await User.findByPk(req.params.id);
       return res.status(200).json({ message: 'User updated', data: updatedUser });
     } else {
-      return res.status(404).json({ message: 'User not found or no changes made' });
+      const error = new Error('User not found or no changes made');
+      error.statusCode = 404;
+      return next(error);
     }
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    next(error);
   }
 };
 
 //  DELETE USER
-exports.deleteUser = async (req, res) => {
+exports.deleteUser = async (req, res, next) => {
   try {
     const deleted = await User.destroy({
       where: { id: req.params.id }
@@ -74,9 +86,11 @@ exports.deleteUser = async (req, res) => {
     if (deleted) {
       return res.status(200).json({ message: 'User deleted successfully' });
     } else {
-      return res.status(404).json({ message: 'User not found' });
+      const error = new Error('User not found');
+      error.statusCode = 404;
+      return next(error);
     }
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    next(error);
   }
 };
